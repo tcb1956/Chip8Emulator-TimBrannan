@@ -1,1 +1,2 @@
+cd c:\Users\Tim\Documents\GitHub\Chip8Emulator-TimBrannan
 g++ -g -o Opcode Opcode.cpp -lstdc++

@@ -10,7 +10,36 @@ using namespace std;
 class Opcode {
   public:
 
-    void dismore(char *buf)
+    void disLevel2(unsigned char qual, unsigned char regr, unsigned char regy)
+    {
+      switch (qual) {
+        case 0:
+          cout << "MOV V" << regr << ",V" << regy << endl;
+        case 1:
+          cout << "OR V" << regr << ",V" << regy << endl;
+        case 2:
+          cout << "AND V" << regr << ",V" << regy << endl;
+        case 3:
+          cout << "XOR V" << regr << ",V" << regy << endl;
+        case 4:
+          cout << "ADD V" << regr << ",V" << regy << endl;
+        case 5:
+          cout << "SUB V" << regr << ",V" << regy << endl;
+        case 6:
+          if (regy == 0) {
+            cout << "SHR V" << regr << endl;
+          };
+        case 7:
+          cout << "RSB V" << regr << ",V" << regy << endl;
+        case 0xe:
+          if (regy == 0) {
+            cout << "SHL V" << regr << endl;
+          };
+      };
+    }
+
+
+    void disLevel1(char *buf)
     {
       unsigned char n0, n1, n2, n3;
       unsigned char cmd, regr, regy, qual;
@@ -57,57 +86,31 @@ class Opcode {
           if (qual == 0) {
             cout << "SKEQ V" << regr << ",V" << regy << endl;
           };
-          //break;
         case 6:
           cout << "MOV V" << hex << regr << "," << hex << cnst << endl;
         case 7:
           cout << "ADD V" << regr << ",V" << regy << endl;
-/*
         case 8:
-          switch (qual) {
-            case 0:
-              cout << "MOV V" << regr << ",V" << regy << endl;
-            case 1:
-              cout << "OR V" << regr << ",V" << regy << endl;
-            case 2:
-              cout << "AND V" << regr << ",V" << regy << endl;
-            case 3:
-              cout << "XOR V" << regr << ",V" << regy << endl;
-            case 4:
-              cout << "ADD V" << regr << ",V" << regy << endl;
-            case 5:
-              cout << "SUB V" << regr << ",V" << regy << endl;
-            case 6:
-              if (regy == 0) {
-                cout << "SHR V" << regr << endl;
-              };
-              //break;
-            case 7:
-              cout << "RSB V" << regr << ",V" << regy << endl;
-            case 0xe:
-              if (regy == 0) {
-                cout << "SHL V" << regr << endl;
-              };
-              //break;
+          disLevel2(qual, regr, regy);
+        case 9:
+          if (qual == 0) {
+            cout << "SKNE V" << regr << ",V" << regy << endl;
           };
-          case 9:
-            if (qual == 0) {
-              cout << "SKNE V" << regr << ",V" << regy << endl;
-            };
-            //break;
-          case 0xa:
-            cout << "MVI " << addr << endl;
-          case 0xb:
-            cout << "JMI " << addr << endl;
-          case 0xc:
-          case 0xd:
-          case 0xe:
-          case 0xf:
-            //break;
-*/
-          default:
-            cout << "Unknown opcode " << hex << n0 << endl;
-        };
+        case 0xa:
+          cout << "MVI " << addr << endl;
+        case 0xb:
+          cout << "JMI " << addr << endl;
+        case 0xc:
+          cout << "FIX THIS " << endl;
+        case 0xd:
+          cout << "FIX THIS " << endl;
+        case 0xe:
+          cout << "FIX THIS " << endl;
+        case 0xf:
+          cout << "FIX THIS " << endl;
+        default:
+          cout << "Unknown opcode " << hex << n0 << endl;
+      };
     }
 
 
@@ -126,7 +129,7 @@ class Opcode {
         in.read(buf, 2);
         cout << hex << c8addr << "   ";
         c8addr += 2;
-        dismore(buf);
+        disLevel1(buf);
         //cout << "Line " << cnt << endl;
       };
       cout << endl;
