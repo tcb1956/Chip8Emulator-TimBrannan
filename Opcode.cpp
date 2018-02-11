@@ -22,21 +22,29 @@ class Opcode {
       n2 = (buf[1] >> 4) & 0xf;
       n3 = buf[1] & 0xf;
 
+      cmd = n0;   //Get first nibble of code
+      qual = n3;  //Keep qual as number not char
+
       //Convert to printable characters
+      n0 < 10 ? n0 += '0' : n0 += 'A' - 10;
       n1 < 10 ? n1 += '0' : n1 += 'A' - 10;
       n2 < 10 ? n2 += '0' : n2 += 'A' - 10;
       n3 < 10 ? n3 += '0' : n3 += 'A' - 10;
 
-      cmd = n0; //Get first nibble of code
-
-      //Build all possible parameters
+      //Build parameters
       sprintf(addr, "%c%c%c", n1, n2, n3);
       sprintf(cnst, "%c%c", n2, n3);
       regr = n1;
       regy = n2;
-      qual = n3;
 
       switch (cmd) {
+        case 0:
+          if(n1=='0' && n2=='E' && n3=='0') {
+            cout << "CLS\n";
+          }
+          if(n1=='0' && n2=='E' && n3=='E') {
+            cout << "RTS\n";
+          }
         case 1:
           cout << "JMP " << addr << endl;
         case 2:
@@ -49,11 +57,12 @@ class Opcode {
           if (qual == 0) {
             cout << "SKEQ V" << regr << ",V" << regy << endl;
           };
-          break;
+          //break;
         case 6:
           cout << "MOV V" << hex << regr << "," << hex << cnst << endl;
         case 7:
           cout << "ADD V" << regr << ",V" << regy << endl;
+/*
         case 8:
           switch (qual) {
             case 0:
@@ -72,20 +81,20 @@ class Opcode {
               if (regy == 0) {
                 cout << "SHR V" << regr << endl;
               };
-              break;
+              //break;
             case 7:
               cout << "RSB V" << regr << ",V" << regy << endl;
             case 0xe:
               if (regy == 0) {
                 cout << "SHL V" << regr << endl;
               };
-              break;
+              //break;
           };
           case 9:
             if (qual == 0) {
               cout << "SKNE V" << regr << ",V" << regy << endl;
             };
-            break;
+            //break;
           case 0xa:
             cout << "MVI " << addr << endl;
           case 0xb:
@@ -94,10 +103,10 @@ class Opcode {
           case 0xd:
           case 0xe:
           case 0xf:
-            break;
+            //break;
+*/
           default:
-            cout << "Unknown opcode " << hex << cmd << endl;
-            //exit(1);
+            cout << "Unknown opcode " << hex << n0 << endl;
         };
     }
 
@@ -111,25 +120,15 @@ class Opcode {
         cout << "Cannot open file\n";
       }
       char buf[2];
-      while(!in.eof()) {
-
+      int cnt = 0;
+      int c8addr = 0x200;
+      while(!in.eof() && ++cnt < 10) {
         in.read(buf, 2);
-
-        unsigned char cmd = buf[0] >> 4;
-
-        switch (cmd) {
-          case 0x00e0:
-            if(buf[1]==0 && buf[2]==14 && buf[3]==0) {
-              cout << "CLS\n";
-            }
-            if(buf[1]==0 && buf[2]==14 && buf[3]==14) {
-              cout << "RTS\n";
-            }
-          default:
-            dismore(buf);
-            //cout << '.';
-        };
-      }
+        cout << hex << c8addr << "   ";
+        c8addr += 2;
+        dismore(buf);
+        //cout << "Line " << cnt << endl;
+      };
       cout << endl;
       in.close();
     }
