@@ -12,35 +12,51 @@ class Opcode {
 
     void disLevel2(unsigned char qual, unsigned char regr, unsigned char regy)
     {
+      //Parse the second nibble of the code if the first is an 8
+
       switch (qual) {
         case 0:
           cout << "MOV V" << regr << ",V" << regy << endl;
+          break;
         case 1:
           cout << "OR V" << regr << ",V" << regy << endl;
+          break;
         case 2:
           cout << "AND V" << regr << ",V" << regy << endl;
+          break;
         case 3:
           cout << "XOR V" << regr << ",V" << regy << endl;
+          break;
         case 4:
           cout << "ADD V" << regr << ",V" << regy << endl;
+          break;
         case 5:
           cout << "SUB V" << regr << ",V" << regy << endl;
+          break;
         case 6:
           if (regy == 0) {
             cout << "SHR V" << regr << endl;
           };
+          break;
         case 7:
           cout << "RSB V" << regr << ",V" << regy << endl;
+          break;
         case 0xe:
           if (regy == 0) {
             cout << "SHL V" << regr << endl;
           };
+          break;
+        default:
+          cout << "Unknown opcode " << endl;
       };
     }
 
 
     void disLevel1(char *buf)
     {
+      //Parse the first nibble of the Opcode
+      //and form the parameters
+
       unsigned char n0, n1, n2, n3;
       unsigned char cmd, regr, regy, qual;
       char addr[4], cnst[3];
@@ -54,7 +70,7 @@ class Opcode {
       cmd = n0;   //Get first nibble of code
       qual = n3;  //Keep qual as number not char
 
-      //Convert to printable characters
+      //Convert nibbles to printable characters
       n0 < 10 ? n0 += '0' : n0 += 'A' - 10;
       n1 < 10 ? n1 += '0' : n1 += 'A' - 10;
       n2 < 10 ? n2 += '0' : n2 += 'A' - 10;
@@ -66,6 +82,7 @@ class Opcode {
       regr = n1;
       regy = n2;
 
+      //Parse first nibble
       switch (cmd) {
         case 0:
           if(n1=='0' && n2=='E' && n3=='0') {
@@ -74,40 +91,56 @@ class Opcode {
           if(n1=='0' && n2=='E' && n3=='E') {
             cout << "RTS\n";
           }
+          break;
         case 1:
           cout << "JMP " << addr << endl;
+          break;
         case 2:
           cout << "JSR " << addr << endl;
+          break;
         case 3:
           cout << "SKEQ V" << regr << "," << cnst << endl;
+          break;
         case 4:
           cout << "SKNE V" << regr << "," << cnst << endl;
+          break;
         case 5:
           if (qual == 0) {
             cout << "SKEQ V" << regr << ",V" << regy << endl;
           };
+          break;
         case 6:
           cout << "MOV V" << hex << regr << "," << hex << cnst << endl;
+          break;
         case 7:
           cout << "ADD V" << regr << ",V" << regy << endl;
+          break;
         case 8:
           disLevel2(qual, regr, regy);
+          break;
         case 9:
           if (qual == 0) {
             cout << "SKNE V" << regr << ",V" << regy << endl;
           };
+          break;
         case 0xa:
           cout << "MVI " << addr << endl;
+          break;
         case 0xb:
           cout << "JMI " << addr << endl;
+          break;
         case 0xc:
           cout << "FIX THIS " << endl;
+          break;
         case 0xd:
           cout << "FIX THIS " << endl;
+          break;
         case 0xe:
           cout << "FIX THIS " << endl;
+          break;
         case 0xf:
           cout << "FIX THIS " << endl;
+          break;
         default:
           cout << "Unknown opcode " << hex << n0 << endl;
       };
