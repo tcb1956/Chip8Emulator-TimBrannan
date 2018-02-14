@@ -12,9 +12,9 @@ class Opcode {
 
     void disLevel2(unsigned char qual, unsigned char regr, unsigned char regy)
     {
-      //Parse the second nibble of the code if the first is an 8
+      //Parse the fourth nibble of the code if the first is an 8
 
-      switch (qual) {
+      switch (qual-'0') {
         case 0:
           cout << "MOV V" << regr << ",V" << regy << endl;
           break;
@@ -36,6 +36,8 @@ class Opcode {
         case 6:
           if (regy == 0) {
             cout << "SHR V" << regr << endl;
+          } else {
+            cout << "Unknown opcode " << endl;
           };
           break;
         case 7:
@@ -44,6 +46,8 @@ class Opcode {
         case 0xe:
           if (regy == 0) {
             cout << "SHL V" << regr << endl;
+          } else {
+            cout << "Unknown opcode " << endl;
           };
           break;
         default:
@@ -51,6 +55,51 @@ class Opcode {
       };
     }
 
+    void disLevel2b(unsigned char qual, unsigned char regr, unsigned char regy)
+    {
+      //Parse the 3rd and 4th nibbles of the code if the first is an 0xf
+
+      switch (regy-'0') {
+        case 0:
+          if(qual=='7') {cout << "GDELAY V" << regr << endl;}
+          else {
+            if(qual=='a') {cout << "KEY V" << regr << endl;}
+            else {cout << "Unknown opcode 0?" << endl;};
+          };
+          break;
+        case 1:
+          if(qual=='5') {cout << "SDELAY V" << regr << endl;}
+          else {
+            if(qual=='8') {cout << "SSOUND V" << regr << endl;}
+            else {cout << "Unknown opcode 1?" << endl;};
+          };
+          break;
+        case 2:
+          if(qual=='9') {cout << "FONT V" << regr << endl;}
+          else {cout << "Unknown opcode 2?" << endl;
+          };
+          break;
+        case 3:
+          if(qual=='0') {cout << "XFONT V" << regr << endl;}
+          else {
+            if(qual=='3') {cout << "BCD V" << regr << endl;}
+            else {cout << "Unknown opcode 3?" << endl;};
+          };
+          break;
+        case 5:
+          if(qual=='5') {cout << "STR V0-V" << regr << endl;}
+          else {cout << "Unknown opcode 5?" << endl;
+          };
+          break;
+        case 6:
+          if(qual=='5') {cout << "LDR V0-V" << regr << endl;}
+          else {cout << "Unknown opcode 6?" << endl;
+          };
+          break;
+        default:
+          cout << "Unknown opcode (default)" << endl;
+      };
+    }
 
     void disLevel1(char *buf)
     {
@@ -58,7 +107,7 @@ class Opcode {
       //and form the parameters
 
       unsigned char n0, n1, n2, n3;
-      unsigned char cmd, regr, regy, qual;
+      unsigned char cmd, regr, regy, qual, s;
       char addr[4], cnst[3];
 
       //Get the nibbles
@@ -81,16 +130,20 @@ class Opcode {
       sprintf(cnst, "%c%c", n2, n3);
       regr = n1;
       regy = n2;
+      s = n3;
 
       //Parse first nibble
       switch (cmd) {
         case 0:
           if(n1=='0' && n2=='E' && n3=='0') {
             cout << "CLS\n";
-          }
-          if(n1=='0' && n2=='E' && n3=='E') {
-            cout << "RTS\n";
-          }
+          } else {
+            if(n1=='0' && n2=='E' && n3=='E') {
+              cout << "RTS\n";
+            } else {
+              cout << "Unknown opcode " << endl;
+            };
+          };
           break;
         case 1:
           cout << "JMP " << addr << endl;
@@ -107,6 +160,8 @@ class Opcode {
         case 5:
           if (qual == 0) {
             cout << "SKEQ V" << regr << ",V" << regy << endl;
+          } else {
+            cout << "Unknown opcode " << endl;
           };
           break;
         case 6:
@@ -116,11 +171,13 @@ class Opcode {
           cout << "ADD V" << regr << ",V" << regy << endl;
           break;
         case 8:
-          disLevel2(qual, regr, regy);
+          disLevel2(s, regr, regy);
           break;
         case 9:
           if (qual == 0) {
             cout << "SKNE V" << regr << ",V" << regy << endl;
+          } else {
+            cout << "Unknown opcode " << endl;
           };
           break;
         case 0xa:
@@ -130,22 +187,31 @@ class Opcode {
           cout << "JMI " << addr << endl;
           break;
         case 0xc:
-          cout << "FIX THIS " << endl;
+          cout << "RAND V" << hex << regr << "," << hex << addr << endl;
           break;
         case 0xd:
-          cout << "FIX THIS " << endl;
+          if(qual==0) {
+            cout << "XSPRITE " << hex << regr << "X," << hex << regy << "Y" << endl;
+          } else {
+            cout << "SPRITE " << hex << regr << "X," << hex << regy << "Y," << hex << s << endl;
+          };
           break;
         case 0xe:
-          cout << "FIX THIS " << endl;
+          //if(qual==14 && regy=='9') {cout << "SKPR " << hex << regr << endl;}
+          if(qual==14) {cout << "SKPR " << hex << regr << endl;}
+          else {
+            //if(qual==1 && regy=='a') {cout << "SKUP " << hex << regr << endl;}
+            if(qual==1) {cout << "SKUP " << hex << regr << endl;}
+            else {cout << "Unknown opcode " << endl;};
+          };
           break;
         case 0xf:
-          cout << "FIX THIS " << endl;
+          disLevel2b(s, regr, regy);
           break;
         default:
           cout << "Unknown opcode " << hex << n0 << endl;
       };
-    }
-
+    };
 
 
     void disassemble(char *fn)
@@ -156,14 +222,13 @@ class Opcode {
         cout << "Cannot open file\n";
       }
       char buf[2];
-      int cnt = 0;
+      //int cnt = 0;
       int c8addr = 0x200;
-      while(!in.eof() && ++cnt < 10) {
+      while(!in.eof()) {  // && ++cnt < 10) {
         in.read(buf, 2);
         cout << hex << c8addr << "   ";
         c8addr += 2;
         disLevel1(buf);
-        //cout << "Line " << cnt << endl;
       };
       cout << endl;
       in.close();
