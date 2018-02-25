@@ -23,6 +23,7 @@ class Opcode {
 
   unsigned char n0, n1, n2, n3;
   unsigned char cmd, regr, regy, qual, s;
+  unsigned int regr_n, regy_n, addr_n, cnst_n;
   char addr[4], cnst[3];
   Stack *stk = new Stack();
   C8mem *emem = new C8mem();
@@ -40,6 +41,10 @@ class Opcode {
     n2 = (buf[1] >> 4) & 0xf;
     n3 = buf[1] & 0xf;
 
+    regr_n = n1;
+    regy_n = n2;
+    addr_n = n1 * 0xff + n2 * 0xf + n3;
+    cnst_n = n2 * 0xf + n3;
     cmd = n0;   //Get first nibble of code
     qual = n3;  //Keep qual as number not char
 
@@ -108,7 +113,9 @@ class SKEQR : public Opcode {
 class MOVC : public Opcode {
   void disassemble() {cout << "MOV V" << hex << regr << "," << hex << cnst << endl;};
   void emulate(struct my_registers *r, C8mem *mem) {
-    r->V[regr] = (int)cnst;
+    cout << "cnst=" << cnst_n << "; regr=" << regr;
+    r->V[regr_n] = (int)cnst_n;
+    cout << "; r->V[regr]=" << r->V[regr_n] << endl;
   };
 };
 class ADDR : public Opcode {

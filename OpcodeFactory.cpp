@@ -32,17 +32,15 @@ class OpcodeFactory {
       n1 = buf[0] & 0xf;
       n2 = (buf[1] >> 4) & 0xf;
       n3 = buf[1] & 0xf;
-      cout << "n's done...";
+
       cmd = n0;   //Get first nibble of code
       qual = n3;  //Keep qual as number not char
-      cout << "qual done...";
 
       //Convert nibbles to printable characters
       n0 < 10 ? n0 += '0' : n0 += 'A' - 10;
       n1 < 10 ? n1 += '0' : n1 += 'A' - 10;
       n2 < 10 ? n2 += '0' : n2 += 'A' - 10;
       n3 < 10 ? n3 += '0' : n3 += 'A' - 10;
-      cout << "convert done...";
 
       //Build parameters
       sprintf(addr, "%c%c%c", n1, n2, n3);
@@ -50,7 +48,6 @@ class OpcodeFactory {
       regr = n1;
       regy = n2;
       s = n3;
-      cout << "params done...";
 
       //Parse first nibble
       switch (cmd) {
@@ -85,14 +82,12 @@ class OpcodeFactory {
           };
           break;
         case 6:
-          cout << "case 6...";
           return new MOVC();
           break;
         case 7:
           return new ADDC();
           break;
         case 8:
-          cout << "case 8...";
           return opLevel2(s, regr, regy);
           break;
         case 9:
@@ -134,7 +129,6 @@ class OpcodeFactory {
           };
           break;
         case 0xf:
-          cout << "case F...";
           return opLevel2b(s, regr, regy);
           break;
         default:

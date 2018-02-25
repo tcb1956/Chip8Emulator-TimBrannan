@@ -26,7 +26,7 @@ class Stack {
     Stack(){
       try {
         stk = new char [96];
-        for(int i=0; i<0x1000; i++) {stk[i] = 0;}
+        for(int i=0; i<96; i++) {stk[i] = 0;}
       } catch (bad_alloc xa) {
         cout << "Allocation Failure\n";
       }

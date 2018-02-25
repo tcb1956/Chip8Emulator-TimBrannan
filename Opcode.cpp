@@ -23,7 +23,7 @@ class Disassembler {
       //release mem
     }
 
-    void disassemble(char *fn)
+    int disassemble(char *fn)
     {
       ifstream in;
       in.open(fn, ios::binary | ios::in);
@@ -38,19 +38,16 @@ class Disassembler {
         in.read(buf, 2);
         cout << hex << c8addr << "   ";
         oc = ocf->createOp(buf);
-        cout << "createOp done...";
         oc->buildParams(buf);
-        cout << "buildParams done...";
         oc->disassemble();
-        cout << "disassemble done...";
         //disLevel1(buf);
         //Disassembler::dmem->set(c8addr, buf[0]);
         dmem->set(c8addr++, buf[0]);
         dmem->set(c8addr++, buf[1]);
-        cout << "dmem->set done\n";
       };
       cout << endl;
       in.close();
+      return c8addr;
     }
 };
 
@@ -96,12 +93,11 @@ class Emulator {
       r->DT = 0;
       r->ST = 0;
       char buf[2];
-      r->PC = 0x200;
       int rtn = 0;
       Opcode *oc;
       OpcodeFactory *ocf = new OpcodeFactory();
       //Stack *stk = new Stack();
-      while(!rtn) {
+      while(r->PC < 0x220) {
         buf[0] = emem->get(r->PC);
         buf[1] = emem->get(r->PC+1);
         oc = ocf->createOp(buf);
@@ -126,22 +122,23 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  //if(argv[2] == 0 || argv[2] == 1) {
+  C8mem *mem = new C8mem();
   if(!strcmp(argv[2], "0") || !strcmp(argv[2], "1")) {
-    C8mem *mem = new C8mem();
     Disassembler *dis = new Disassembler(mem);
-    dis->disassemble(argv[1]);
-    cout << "Done\n";
-    /*for(int i=0x200;i<0x210;i++) {
-      cout << "c8mem @ " << i << " is " << hex << mem->get(i) << endl;
-    }*/
-    //if(argv[2] == 1) {
+    int sz = dis->disassemble(argv[1]);
+    cout << "Done\n" << "sz=" << sz << endl;
+
+    for(int a=0x200; a<0x200+sz; a++) {
+      cout << mem->get(a);
+    }
+    cout << endl;
+
     if(!strcmp(argv[2], "1")) {
       Emulator *em = new Emulator(mem);
       em->emulate();
+    } else {
+      cout << argv[2] << " is not a valid option"  << endl;
     }
-  } else {
-    cout << argv[2] << " is not a valid option"  << endl;
   }
   return 0;
 }
