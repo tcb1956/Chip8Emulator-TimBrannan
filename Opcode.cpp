@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <conio.h>
 #include <iostream>
 #include <fstream>
 #include <cctype>
@@ -40,6 +41,7 @@ class Disassembler {
         oc = ocf->createOp(buf);
         oc->buildParams(buf);
         oc->disassemble();
+        cout << endl;
         //disLevel1(buf);
         //Disassembler::dmem->set(c8addr, buf[0]);
         dmem->set(c8addr++, buf[0]);
@@ -61,21 +63,27 @@ class Emulator {
     struct my_registers my_regs;
     struct my_registers *r;
 
-    // memory space
+    // memory space and stack
     C8mem *emem;
+    Stack *stk;
 
     void printStat(void) {
-      for(int i=0; i<16; i++) {
+      cout << "\t\tPC=" << r->PC << ", SP=" << r->SP << ", I=" << r->I << ", DT=" << r->DT << ", ST=" << r->ST << endl;
+      cout << "\t\t\t";
+      for(int i=0; i<8; i++) {
+        cout << "V[" << i << "]=" << r->V[i] << ", ";
+      };
+      cout << endl << "\t\t\t";
+      for(int i=8; i<16; i++) {
         cout << "V[" << i << "]=" << r->V[i] << ", ";
       };
       cout << endl;
-      cout << "PC=" << r->PC << ", I=" << r->I << ", DT=" << r->DT << ", ST=" << r->ST << endl;
-      r->PC += 2;
     }
 
     Emulator(C8mem *mem) {
       // Address space
       emem = mem;
+      stk = new Stack();
     }
 
     ~Emulator(){
@@ -89,24 +97,30 @@ class Emulator {
         r->V[i] = 0;
       }
       r->PC = 0x200;
+      r->SP = 0xF00;
       r->I = 0;
       r->DT = 0;
       r->ST = 0;
       char buf[2];
       int rtn = 0;
+      char ch;
+      bool stp = 0;
       Opcode *oc;
       OpcodeFactory *ocf = new OpcodeFactory();
-      //Stack *stk = new Stack();
-      while(r->PC < 0x220) {
+      while(!stp && r->PC>=0x200) {
         buf[0] = emem->get(r->PC);
         buf[1] = emem->get(r->PC+1);
         oc = ocf->createOp(buf);
         oc->buildParams(buf);
         oc->disassemble();
-        oc->emulate(r, emem);
+        oc->emulate(r, emem, stk);
         printStat();
         r->PC += 2;
-        Sleep(2);
+        //if((ch = GetAsyncKeyState(VK_SPACE)) == 27) {stp = 1;};
+        if (kbhit()) {
+            ch = getch();
+            if (ch == 27) {stp = 1;};
+        }
       };
     }
 };
@@ -123,22 +137,22 @@ int main(int argc, char *argv[])
   }
 
   C8mem *mem = new C8mem();
-  if(!strcmp(argv[2], "0") || !strcmp(argv[2], "1")) {
-    Disassembler *dis = new Disassembler(mem);
-    int sz = dis->disassemble(argv[1]);
-    cout << "Done\n" << "sz=" << sz << endl;
+  Disassembler *dis = new Disassembler(mem);
 
-    for(int a=0x200; a<0x200+sz; a++) {
-      cout << mem->get(a);
-    }
-    cout << endl;
-
-    if(!strcmp(argv[2], "1")) {
-      Emulator *em = new Emulator(mem);
-      em->emulate();
-    } else {
-      cout << argv[2] << " is not a valid option"  << endl;
-    }
+  int bad = 1;
+  if(!strcmp(argv[2], "0")) {
+    dis->disassemble(argv[1]);
+    cout << "Done" << endl;
+    bad = 0;
+  }
+  if(!strcmp(argv[2], "1")) {
+    Emulator *em = new Emulator(mem);
+    dis->disassemble(argv[1]);
+    em->emulate();
+    bad = 0;
+  }
+  if(bad == 1) {
+    cout << argv[2] << " is not a valid option"  << endl;
   }
   return 0;
 }

@@ -5,6 +5,7 @@ namespace Mine {
   struct my_registers {
     int V[16];
     int PC;
+    int SP;
     int I;
     int DT;
     int ST;
@@ -18,14 +19,14 @@ using namespace std;
 /************************************************************/
 class Stack {
   private:
-    char *stk;
+    int *stk;
     int SP = 0xF00;
 
   public:
 
     Stack(){
       try {
-        stk = new char [96];
+        stk = new int [96];
         for(int i=0; i<96; i++) {stk[i] = 0;}
       } catch (bad_alloc xa) {
         cout << "Allocation Failure\n";
@@ -36,21 +37,23 @@ class Stack {
       delete [] stk;
     }
 
-    // Put in boundary checks !!
-    void push(char val) {
+    void push(int val) {
       if(SP == 0xEA0) {
-        cout << "Stack full" << endl;
+        cout << endl << "Stack full" << endl;
       } else {
-        stk[--SP] = val;
+        SP--;
+        stk[SP] = val;
       }
     }
 
-    char pop() {
-      if(SP == 0x1000) {
-        cout << "Stack underflow" << endl;
+    int pop() {
+      if(SP == 0xF02) {
+        cout << endl << "Stack underflow" << endl;
         return -1;
       } else {
-        return stk[SP++];
+        int tmp = SP;
+        SP++;
+        return stk[tmp];
       }
     }
 };
@@ -82,5 +85,52 @@ class C8mem {
     }
     char get(unsigned int indx) {
       return mem[indx];
+    }
+};
+
+/************************************************************/
+/*           THIS NEEDS WORK                                */
+/************************************************************/
+class Keypad {
+  private:
+    char *keys;
+
+  public:
+
+    Keypad() {
+      try {
+        keys = new char [0xf];
+        for(int i=0; i<0x10; i++) {keys[i] = 0;}
+      } catch (bad_alloc xa) {
+        cout << "Allocation Failure\n";
+      }
+    }
+
+    ~Keypad() {
+      delete [] keys;
+    }
+
+    char get(unsigned int indx) {
+      return keys[indx];
+    }
+};
+
+/************************************************************/
+/*           THIS NEEDS WORK                                */
+/************************************************************/
+class Display {
+  public:
+    bool disp[64][32];
+
+    Display() {
+      for(int i=0; i<64; i++) {
+        for(int j=0; j<32; j++) {
+          disp[i][j] = 0;
+        }
+      }
+    }
+
+    ~Display() {
+      //delete [] disp;
     }
 };
