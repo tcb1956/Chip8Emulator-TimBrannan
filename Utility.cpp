@@ -1,19 +1,7 @@
 #include <iostream>
 
-namespace Mine {
-
-  struct my_registers {
-    int V[16];
-    int PC;
-    int SP;
-    int I;
-    int DT;
-    int ST;
-  };
-
-}
-
 using namespace std;
+
 /************************************************************/
 /*                                                          */
 /************************************************************/
@@ -63,13 +51,14 @@ class Stack {
 /************************************************************/
 class C8mem {
   private:
-    char *mem;
+    unsigned char *mem;
 
   public:
 
     C8mem() {
       try {
-        mem = new char [0xfff];
+        //mem = calloc(1024*4, 1);
+        mem = new unsigned char [0x1000];
         for(int i=0; i<0x1000; i++) {mem[i] = 0;}
       } catch (bad_alloc xa) {
         cout << "Allocation Failure\n";
@@ -133,4 +122,25 @@ class Display {
     ~Display() {
       //delete [] disp;
     }
+
+    void set(unsigned int row, unsigned int col, char val) {
+      disp[row][col] = val;
+    }
+    char get(unsigned int row, unsigned int col) {
+      return disp[row][col];
+    }
+
+};
+
+struct my_registers {
+  int V[16];
+  int PC;
+  int SP;
+  int I;
+  int DT;
+  int ST;
+  Keypad *kp;
+  C8mem *mem;
+  Stack *stk;
+  Display *disp;
 };

@@ -60,12 +60,13 @@ class Disassembler {
 class Emulator {
   public:
 
-    struct my_registers my_regs;
+    //struct my_registers my_regs;
     struct my_registers *r;
 
     // memory space and stack
-    C8mem *emem;
-    Stack *stk;
+    //C8mem *emem;
+    //Stack *stk;
+
 
     void printStat(void) {
       cout << "\t\tPC=" << r->PC << ", SP=" << r->SP << ", I=" << r->I << ", DT=" << r->DT << ", ST=" << r->ST << endl;
@@ -78,12 +79,23 @@ class Emulator {
         cout << "V[" << i << "]=" << r->V[i] << ", ";
       };
       cout << endl;
+      //print out display
+      /*
+      for(int row=0; row<64; row++) {
+        for(int col=0; col<32; col++) {
+          cout << r->disp->get(row, col) << " ";
+        }
+        cout << endl;
+      }
+      */
     }
 
-    Emulator(C8mem *mem) {
+    Emulator(struct my_registers *r_in) {
       // Address space
-      emem = mem;
-      stk = new Stack();
+      //emem = mem;
+      //stk = new Stack();
+      r = r_in;
+      //r->disp = &r->mem[0xf00];
     }
 
     ~Emulator(){
@@ -92,7 +104,7 @@ class Emulator {
 
     void emulate(void)
     {
-      r = &my_regs;
+      //r = &my_regs;
       for(int i=0; i<17; i++) {
         r->V[i] = 0;
       }
@@ -101,6 +113,10 @@ class Emulator {
       r->I = 0;
       r->DT = 0;
       r->ST = 0;
+      r->kp = new Keypad();
+      r->stk = new Stack();
+      //r->mem = new C8mem();
+      r->disp = new Display();
       char buf[2];
       int rtn = 0;
       char ch;
@@ -108,15 +124,20 @@ class Emulator {
       Opcode *oc;
       OpcodeFactory *ocf = new OpcodeFactory();
       while(!stp && r->PC>=0x200) {
-        buf[0] = emem->get(r->PC);
-        buf[1] = emem->get(r->PC+1);
+        buf[0] = r->mem->get(r->PC);
+        buf[1] = r->mem->get(r->PC+1);
         oc = ocf->createOp(buf);
         oc->buildParams(buf);
         oc->disassemble();
-        oc->emulate(r, emem, stk);
+        oc->emulate(r);
         printStat();
         r->PC += 2;
-        //if((ch = GetAsyncKeyState(VK_SPACE)) == 27) {stp = 1;};
+        Sleep(1000);
+        /* line by line
+        ch = cin.get();
+        if(ch == 27) {stp = 1;};
+        */
+        // Fast
         if (kbhit()) {
             ch = getch();
             if (ch == 27) {stp = 1;};
@@ -136,8 +157,12 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  C8mem *mem = new C8mem();
-  Disassembler *dis = new Disassembler(mem);
+  struct my_registers my_regs;
+  struct my_registers* r = &my_regs;
+  r = (my_registers*)calloc(sizeof(my_registers), 1);
+  C8mem *c8mem = new C8mem();
+  r->mem = c8mem;
+  Disassembler *dis = new Disassembler(r->mem);
 
   int bad = 1;
   if(!strcmp(argv[2], "0")) {
@@ -146,7 +171,7 @@ int main(int argc, char *argv[])
     bad = 0;
   }
   if(!strcmp(argv[2], "1")) {
-    Emulator *em = new Emulator(mem);
+    Emulator *em = new Emulator(r);
     dis->disassemble(argv[1]);
     em->emulate();
     bad = 0;
