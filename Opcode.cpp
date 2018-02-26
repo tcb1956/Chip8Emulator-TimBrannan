@@ -80,14 +80,15 @@ class Emulator {
       };
       cout << endl;
       //print out display
-      /*
+      //
       for(int row=0; row<64; row++) {
         for(int col=0; col<32; col++) {
-          cout << r->disp->get(row, col) << " ";
+          bool num = r->disp->get(row, col) ? 1 : 0;
+          cout << num << " ";
         }
         cout << endl;
       }
-      */
+      //
     }
 
     Emulator(struct my_registers *r_in) {

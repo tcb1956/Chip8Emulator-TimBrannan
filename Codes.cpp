@@ -218,13 +218,17 @@ class SPRITE : public Opcode {
   void disassemble() {cout << "SPRITE " << hex << regr << "X," << hex << regy << "Y," << hex << s;};
   void emulate(struct my_registers *r) {
     for(int row=0; row<s_n; row++) {
+      //get byte
       unsigned char tmp = r->mem->get(r->I+row);
       unsigned char msk = 0x80;
       for(int col=7; col>-1; col--) {
-        bool tmp2 = (bool)(tmp & msk) >> col;
+        //get single bit out of byte
+        bool tmp2 = (bool)((tmp & msk) >> col);
+        //XOR with value in display
         bool in = r->disp->get(regr_n+row, regy+col);
         bool out = in ^ tmp2;
         r->disp->set(regr_n+row, regy+col, out);
+        //cout << "tmp=" << hex << tmp << "; tmp2=" << (tmp2==1?1:0) << "; in=" << (in==1?1:0) << "; msk=" << hex << msk << "; out=" << (out==1?1:0) << endl;
         msk = msk >> 1;
       }
     }
