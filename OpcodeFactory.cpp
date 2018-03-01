@@ -107,11 +107,9 @@ class OpcodeFactory {
           return new RND();
           break;
         case 0xd:
-          if(qual==0) {
-            return new XSPRITE();
-          } else {
+          //if(qual == s) {
             return new SPRITE();
-          };
+          //};
           break;
         case 0xe:
           //if(qual==14 && regy=='9') {

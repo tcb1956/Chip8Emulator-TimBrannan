@@ -25,10 +25,20 @@ class Opcode {
   unsigned int regr_n, regy_n, addr_n, cnst_n, s_n;
   char addr[4], cnst[3];
   //Stack *stk = new Stack();
+  Delay *del;
+  Sound *snd;
+  
+  Opcode() {
+	Delay *del = new Delay();
+	Sound *snd = new Sound();
+  };
+  ~Opcode() {};
 
   virtual void disassemble() = 0;
   //virtual void emulate(struct my_registers *r) = 0;
-  virtual void emulate(struct my_registers *r) = 0;
+  virtual void emulate(struct my_registers *r) {
+	cout << "Unimplemented instruction" << endl;
+  };
   void buildParams(char* buf) {
 
   //Parse the first nibble of the Opcode
@@ -66,7 +76,13 @@ class Opcode {
 
 class CLS : public Opcode {
   void disassemble() {cout << "CLS";};
-  void emulate(struct my_registers *r) {};
+  void emulate(struct my_registers *r) {
+    for(int row=0; row<64; row++) {
+      for(int col=0; col<32; col++) {
+        r->disp->set(row, col, 0);
+      }
+    }
+  };
 };
 class RTS : public Opcode {
   void disassemble() {cout << "RTS";};
@@ -117,9 +133,7 @@ class SKEQR : public Opcode {
 class MOVC : public Opcode {
   void disassemble() {cout << "MOV V" << hex << regr << "," << hex << cnst;};
   void emulate(struct my_registers *r) {
-    //cout << "cnst=" << cnst << "; cnst_n=" << cnst_n << "; regr=" << regr << "; regr_n=" << regr_n;
     r->V[regr_n] = cnst_n;
-    //cout << "; r->V[regr]=" << r->V[regr_n];
   };
 };
 class ADDR : public Opcode {
@@ -156,21 +170,27 @@ class ADDC : public Opcode {
   void disassemble() {cout << "ADD V" << regr << ",V" << regy;};
   // carry in Vf
   void emulate(struct my_registers *r) {
-    r->V[regr_n] = r->V[regr_n] + r->V[regy_n];
+    int tmp = r->V[regr_n] + r->V[regy_n];
+    r->V[regr_n] = tmp;
+    r->V[0xf] = tmp > 255 ? 1 : 0;
   };
 };
 class SUBR : public Opcode {
   void disassemble() {cout << "SUB V" << regr << ",V" << regy;};
   void emulate(struct my_registers *r) {
     //Vf = 1 if borrow !!!
-    r->V[regr_n] = r->V[regr_n] - r->V[regy_n];
+    int tmp = r->V[regr_n] - r->V[regy_n];
+    r->V[regr_n] = tmp;
+    r->V[0xf] = tmp < 0 ? 1 : 0;
   };
 };
 class SHR : public Opcode {
   void disassemble() {cout << "SHR V" << regr;};
   void emulate(struct my_registers *r) {
     //bit 0 to Vf !!!
+    int tmp = r->V[regr_n] & 1;
     r->V[regr_n] = r->V[regr_n] >> 1;
+    r->V[0xf] = tmp;
   };
 };
 class RSB : public Opcode {
@@ -184,7 +204,9 @@ class SHL : public Opcode {
   void disassemble() {cout << "SHL V" << regr;};
   void emulate(struct my_registers *r) {
     // bit 7 to Vf !!!
+    int tmp = r->V[regr_n] & 0x80 >> 7;
     r->V[regr_n] = r->V[regr_n] << 1;
+    r->V[0xf] = tmp;
   };
 };
 class SKNER : public Opcode {
@@ -198,7 +220,6 @@ class SKNER : public Opcode {
 class MVI : public Opcode {
   void disassemble() {cout << "MVI " << addr << "  ";};
   void emulate(struct my_registers *r) {
-    //cout << "cnst=" << cnst << "; cnst_n=" << cnst_n << "; regr=" << regr << "; regr_n=" << regr_n;
     r->I = addr_n;
   };
 };
@@ -211,12 +232,13 @@ class JMI : public Opcode {
 class RND : public Opcode {
   void disassemble() {cout << "RAND V" << hex << regr << "," << hex << addr;};
   void emulate(struct my_registers *r) {
-    r->V[regr_n] = rand() % addr_n;
+    r->V[regr_n] = (rand() % 255) & addr_n;
   };
 };
 class SPRITE : public Opcode {
   void disassemble() {cout << "SPRITE " << hex << regr << "X," << hex << regy << "Y," << hex << s;};
   void emulate(struct my_registers *r) {
+    bool chg = 0;
     for(int row=0; row<s_n; row++) {
       //get byte
       unsigned char tmp = r->mem->get(r->I+row);
@@ -225,66 +247,62 @@ class SPRITE : public Opcode {
         //get single bit out of byte
         bool tmp2 = (bool)((tmp & msk) >> col);
         //XOR with value in display
-        bool in = r->disp->get(regr_n+row, regy+col);
+        bool in = r->disp->get(regy_n+col, regr_n+row);
         bool out = in ^ tmp2;
-        r->disp->set(regr_n+row, regy+col, out);
+	   if(out != in) {r->V[0xf] = 1;} //set Vf if a bit changes
+        r->disp->set(regy_n+col, regr_n+row, out);
         //cout << "tmp=" << hex << tmp << "; tmp2=" << (tmp2==1?1:0) << "; in=" << (in==1?1:0) << "; msk=" << hex << msk << "; out=" << (out==1?1:0) << endl;
         msk = msk >> 1;
       }
     }
   };
 };
-class XSPRITE : public Opcode {
-  void disassemble() {cout << "XSPRITE " << hex << regr << "X," << hex << regy << "Y";};
-  void emulate(struct my_registers *r) {};
-};
 class SKPR : public Opcode {
   void disassemble() {cout << "SKPR " << hex << regr;};
-  void emulate(struct my_registers *r) {};
+  void emulate(struct my_registers *r) {
+     if (kbhit()) {
+         ch = getch();
+         if (ch == regr_n) {r->PC += 2;};
+     }
+  };
 };
 class SKUP : public Opcode {
   void disassemble() {cout << "SKUP " << hex << regr;};
-  void emulate(struct my_registers *r) {};
+  void emulate(struct my_registers *r) {
+     if (!kbhit()) {
+         ch = getch();
+         if (ch != regr_n) {r->PC += 2;};
+     }
+  };
 };
 class GDELAY : public Opcode {
   void disassemble() {cout << "GDELAY V" << regr;};
   void emulate(struct my_registers *r) {
-    /* From Emulator101
-    static void OpF(Chip8State *state, uint8_t *code)
-    {
-     int reg = code[0]&0xf;
-     switch (code[1])
-     {
-         case 0x07: state->V[reg] = state->delay; break;  //MOV VX, DELAY
-         case 0x15: state->delay = state->V[reg]; break;  //MOV DELAY, VX
-         case 0x18: state->sound = state->V[reg]; break;  //MOV SOUND, VX
-     }
-   } */
+     // From Emulator101
+     r->V[regr_n] = del->get();
   };
 };
 class KEYR : public Opcode {
   void disassemble() {cout << "KEY V" << regr;};
-  void emulate(struct my_registers *r) {};
+  void emulate(struct my_registers *r) {
+     while(!kbhit()) {};
+     ch = getch();
+	r->V[regr_n] = ch;
+  };
 };
 class SDELAY : public Opcode {
   void disassemble() {cout << "SDELAY V" << regr;};
   void emulate(struct my_registers *r) {
-    /* From Emulator101
-    static void OpF(Chip8State *state, uint8_t *code)
-    {
-     int reg = code[0]&0xf;
-     switch (code[1])
-     {
-         case 0x07: state->V[reg] = state->delay; break;  //MOV VX, DELAY
-         case 0x15: state->delay = state->V[reg]; break;  //MOV DELAY, VX
-         case 0x18: state->sound = state->V[reg]; break;  //MOV SOUND, VX
-     }
-   } */
+     // From Emulator101
+     del->set(r->V[regr_n]);
   };
 };
 class SSOUND : public Opcode {
   void disassemble() {cout << "SSOUND V" << regr;};
-  void emulate(struct my_registers *r) {};
+  void emulate(struct my_registers *r) {
+     // From Emulator101
+     snd->set(r->V[regr_n]);
+  };
 };
 class ADI : public Opcode {
   void disassemble() {cout << "ADI V" << regr << "  ";};
@@ -294,11 +312,15 @@ class ADI : public Opcode {
 };
 class FONTR : public Opcode {
   void disassemble() {cout << "FONT V" << regr << "  ";};
-  void emulate(struct my_registers *r) {};
+  void emulate(struct my_registers *r) {
+	Opcode::emulate();
+  };
 };
 class XFONT : public Opcode {
   void disassemble() {cout << "XFONT V" << regr << "  ";};
-  void emulate(struct my_registers *r) {};
+  void emulate(struct my_registers *r) {
+	Opcode::emulate();
+  };
 };
 class BCD : public Opcode {
   void disassemble() {cout << "BCD V" << regr << "  ";};
