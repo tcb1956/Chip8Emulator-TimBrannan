@@ -81,10 +81,10 @@ class Emulator {
       cout << endl;
       //print out display
       //
-      for(int row=0; row<64; row++) {
-        for(int col=0; col<32; col++) {
-          bool num = r->disp->get(row, col) ? 1 : 0;
-          cout << num << " ";
+      for(int row=0; row<32; row++) {
+        for(int col=0; col<64; col++) {
+          bool num = r->disp->get(col, row) ? 1 : 0;
+          cout << num;
         }
         cout << endl;
       }
@@ -118,6 +118,8 @@ class Emulator {
       r->stk = new Stack();
       //r->mem = new C8mem();
       r->disp = new Display();
+      my_Delay *del = new my_Delay(r);
+      my_Sound *snd = new my_Sound(r);
       char buf[2];
       int rtn = 0;
       char ch;
@@ -130,7 +132,7 @@ class Emulator {
         oc = ocf->createOp(buf);
         oc->buildParams(buf);
         oc->disassemble();
-        oc->emulate(r);
+        oc->emulate(r, del, snd);
         printStat();
         r->PC += 2;
         Sleep(1000);

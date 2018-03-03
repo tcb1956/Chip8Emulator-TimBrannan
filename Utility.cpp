@@ -132,43 +132,6 @@ class Display {
 
 };
 
-/************************************************************/
-/*           THIS NEEDS WORK                                */
-/************************************************************/
-class Delay {
-  public:
-	struct my_registers *r;
-	Delay(struct my_registers *r_in) {
-		r = r_in;
-	}
-	~Delay() {};
-	void set(int val) {
-		r->DT = val;
-		//Start timer to count down at 60Hz
-	}
-	int get(void) {
-		return r->DT;
-	}
-};
-
-/************************************************************/
-/*           THIS NEEDS WORK                                */
-/************************************************************/
-class Sound {
-  public:
-	struct my_registers *r;
-	Sound (struct my_registers *r_in) {
-		r = r_in;
-	}
-	~Sound () {};
-	void set(int val) {
-		r->ST = val;
-		//Start timer to count down at 60Hz
-		//If ST > 0 sound buzzer
-	}
-};
-
-
 struct my_registers {
   int V[16];
   int PC;
@@ -180,4 +143,40 @@ struct my_registers {
   C8mem *mem;
   Stack *stk;
   Display *disp;
+};
+
+/************************************************************/
+/*           THIS NEEDS WORK                                */
+/************************************************************/
+class my_Delay {
+  public:
+    struct my_registers *r;
+  	my_Delay(struct my_registers *r_in) {
+      r = r_in;
+    };
+  	~my_Delay() {};
+  	void set(int val) {
+  		r->DT = val;
+  		//Start timer to count down at 60Hz
+  	}
+  	int get() {
+  		return r->DT;
+  	}
+};
+
+/************************************************************/
+/*           THIS NEEDS WORK                                */
+/************************************************************/
+class my_Sound {
+  public:
+    struct my_registers *r;
+	  my_Sound (struct my_registers *r_in) {
+		    r = r_in;
+	  }
+	  ~my_Sound () {};
+  	void set(int val) {
+  		r->ST = val;
+  		//Start timer to count down at 60Hz
+  		//If ST > 0 sound buzzer
+  	}
 };
